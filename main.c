@@ -62,37 +62,33 @@ DAC_InitTypeDef  DAC_InitStructure;
 float estados_fir[30];
 
 float coef[FILTERORDER] = {
-		-1.73612192012222373e-17,
-		-0.00955767541404129242,
-		-0.0092974093256849525,
-		5.54109570193356632e-18,
-		0.0111337082817587057,
-		0.0137385090585045375,
-		-6.0208811328752934e-18,
-		-0.0300378724281842591,
-		-0.0665891363015007898,
-		-0.0931977857830110501,
-		-0.0938325802020069238,
-		-0.060861958046541216,
-		1.22790813396389179e-17,
-		0.0705052346295413218,
-		0.126528797747938904,
-		0.147825096653919491,
-		0.126528797747938904,
-		0.0705052346295413218,
-		1.22790813396389179e-17,
-		-0.060861958046541216,
-		-0.0938325802020069238,
-		-0.0931977857830110501,
-		-0.0665891363015007898,
-		-0.0300378724281842591,
-		-6.0208811328752934e-18,
-		0.0137385090585045375,
-		0.0111337082817587057,
-		5.54109570193356632e-18,
-		-0.0092974093256849525,
-		-0.00955767541404129242,
-		-1.73612192012222373e-17
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9
 };
 
 
@@ -216,11 +212,33 @@ int main(void)
 	  }
 }
 
-static void USART_init(void){
+void USART_init(void){
+	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStruct;
 	NVIC_InitTypeDef   NVIC_InitStructure;
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+
+	/* Connect PXx to USARTx_Tx*/
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+
+	/* Connect PXx to USARTx_Rx*/
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
+
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/* Configure USART Rx as alternate function  */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	USART_InitStruct.USART_BaudRate = 9600;
 	USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
@@ -229,29 +247,22 @@ static void USART_init(void){
 	USART_InitStruct.USART_StopBits = USART_StopBits_1;
 	USART_InitStruct.USART_WordLength = USART_WordLength_8b;
 	USART_Init(USART1, &USART_InitStruct);
-	USART_Cmd(USART1, ENABLE);
 
-	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); // rx interrupt
+	USART_ITConfig(USART1, USART_IT_RXNE, 	ENABLE); // rx interrupt
 
-	/**
-	 * Set Channel to USART1
-	 * Set Channel Cmd to enable. That will enable USART1 channel in NVIC
-	 * Set Both priorities to 0. This means high priority
-	 *
-	 * Initialize NVIC
-	 */
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_InitStructure);
 
+	USART_Cmd(USART1, ENABLE);
 }
 
 
 void USART1_IRQHandler(void)
 {
-	if ((USART1->SR & USART_FLAG_RXNE) != (u16)RESET){
+	if (USART1->SR && 1<<5){
 		uart_receive = USART_ReceiveData(USART1);
 		if (buffer_i < BUFFERSIZE && !buffer_full){
 			entryBuffer[buffer_i] = uart_receive;
@@ -263,5 +274,12 @@ void USART1_IRQHandler(void)
 	}
 }
 
+
+void UARTSend(void)
+{
+	for(int sample=0; sample<BUFFERSIZE;sample++){
+		USART_SendData(USART1,outputBuffer[sample]);
+	}
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

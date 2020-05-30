@@ -148,18 +148,8 @@ void SysTick_Handler(void)
 
 extern __IO uint8_t KeyPressed;
 
-void EXTI0_IRQHandler(void)
-{
-  if(EXTI_GetITStatus(USER_BUTTON_EXTI_LINE) != RESET)
-  {
-    /* Change the int flag */
+void EXTI0_IRQHandler(void){}
 
-    KeyPressed = RESET;
-
-    /* Clear the Right Button EXTI line pending bit */
-    EXTI_ClearITPendingBit(USER_BUTTON_EXTI_LINE);
-  }
-}
 extern uint8_t intFlag, cpuDone, overrunFlag;
 void DMA2_Stream0_IRQHandler(void)
 {
