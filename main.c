@@ -47,11 +47,19 @@
 /* Private variables ---------------------------------------------------------*/
 /* You can monitor the converted value by adding the variable "uhADC3ConvertedValue" 
    to the debugger watch window */
-__IO uint16_t entryBuffer[BUFFERSIZE]; //Buffer de muestras
-__IO uint16_t outputBuffer[BUFFERSIZE]; //Buffer de muestras
-__IO uint16_t filterBuffer[FILTERORDER]; //Buffer de muestras
+__IO float entryBuffer[BUFFERSIZE]; //Buffer de muestras
+__IO float outputBuffer[BUFFERSIZE]; //Buffer de muestras
+__IO float filterBuffer[FILTERORDER]; //Buffer de muestras
 
 uint32_t sum_filter = 0;
+
+float f;
+unsigned char b[] = {'a','b','c','d'};
+int byte_count = 0;
+
+void get_float(){
+	memcpy(&f, &b, sizeof(f));
+}
 
 Point 	pointBuffer[BUFFERSIZE];	 //Buffer de puntos para gráficar
 pPoint  pPoints=(pPoint)pointBuffer;
@@ -265,7 +273,15 @@ void USART1_IRQHandler(void)
 	if (USART1->SR && 1<<5){
 		uart_receive = USART_ReceiveData(USART1);
 		if (buffer_i < BUFFERSIZE && !buffer_full){
-			entryBuffer[buffer_i] = uart_receive;
+			if (byte_count <3){
+				b[byte_count] = uart_receive;
+				byte_count++;
+			}else{
+				b[byte_count] = uart_receive;
+				byte_count = 0;
+				get_float();
+				entryBuffer[buffer_i] = f;
+			}
 			buffer_i++;
 		} else{
 			buffer_full = 1;
@@ -275,11 +291,12 @@ void USART1_IRQHandler(void)
 }
 
 
-void UARTSend(void)
-{
-	for(int sample=0; sample<BUFFERSIZE;sample++){
-		USART_SendData(USART1,outputBuffer[sample]);
-	}
-}
+
+/*
+ * Docs
+ * Send uart by using USART_SendData(USART1,DATA);
+ *
+ */
+
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
