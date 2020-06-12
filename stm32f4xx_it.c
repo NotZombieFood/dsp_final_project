@@ -153,14 +153,6 @@ void EXTI0_IRQHandler(void){}
 extern uint8_t intFlag, cpuDone, overrunFlag;
 void DMA2_Stream0_IRQHandler(void)
 {
-	intFlag=1;
-	if(cpuDone==0){
-		DMA_Cmd(DMA2_Stream0, DISABLE); // disable the dma when overrun happens
-		overrunFlag = 1;
-	}
-
-	//ADC_DMACmd(ADC3, DISABLE);
-	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
 
 }
 /******************************************************************************/
